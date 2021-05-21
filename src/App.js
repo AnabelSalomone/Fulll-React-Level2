@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import SearchResults from "./components/SearchResults";
-import "./App.css";
+import Error from "./components/Error";
+import SearchInput from "./components/SearchInput";
+import "./index.css";
 
 function App() {
   const [searchResult, setSearchResult] = useState([]); // established via the APIData function and sent to the SerachResults component
   const [keyword, setKeyword] = useState(""); // initializes the keyword
-  let input = React.createRef();
+  const [codeStatus, setCodeStatus] = useState(200);
 
   const APIData = async (keyword) => {
-    const url = "https://api.github.com/search/users?q=";
-    const api = url + keyword;
+    const url = `https://api.github.com/search/users?q=${keyword}`;
 
-    const data = await fetch(api);
+    const data = await fetch(url);
+    setCodeStatus(data.status);
     const json = await data.clone().json();
-
     setSearchResult(json.items);
   };
 
@@ -21,18 +22,28 @@ function App() {
     APIData(keyword);
   };
 
-  const handleOnChange = () => {
-    setKeyword(input.current.value);
+  const handleOnChange = (e) => {
+    setKeyword(e.target.value);
   };
 
   useEffect(() => {
-    handleSearchbar(keyword);
-  }, [keyword])
+    if (keyword.length > 0) {
+      handleSearchbar(keyword);
+    }
+  }, [keyword]);
 
   return (
     <div className="container">
-      <input type="text" name="searchbar" ref={input} onChange={handleOnChange} />
-      {searchResult ? <SearchResults results={searchResult}/> : null}
+      <div className="searchbar">
+        <SearchInput keyword={keyword} handleOnChange={handleOnChange} />
+      </div>
+      <div>
+        {searchResult && searchResult.length > 1 && codeStatus === 200 ? (
+          <SearchResults results={searchResult} />
+        ) : (
+          <Error codeStatus={codeStatus} />
+        )}
+      </div>
     </div>
   );
 }
